@@ -197,3 +197,32 @@ module.exports.otpPassword = async (req, res) => {
     token: token
   })
 }
+
+// [POST] api/users/password/forgotPassword
+module.exports.resetPassword = async (req, res) => {
+  const token = req.cookies.token;
+  const password = req.body.password;
+
+  const user = await User.findOne({
+    token: token
+  });
+
+  if(md5(password) === user.password) {
+    return res.json({
+      code: 400,
+      message: 'Password cannot be the same as current password'
+    });
+  }
+   
+  await User.updateOne({
+    token: token
+  }, {
+    password: md5(password)
+  });
+
+  res.json({
+    code: 200,
+    message: 'Reset password successfully',
+    token: token
+  })
+}
