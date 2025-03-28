@@ -34,3 +34,37 @@ module.exports.register = async (req, res) => {
     })
   }
 }
+
+// [POST] api/users/login
+module.exports.login = async (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+
+  const user = await User.findOne({ 
+    email: email,
+    deleted: false, 
+  });
+
+  if(!user) {
+    return res.json({
+      code: 400,
+      message: 'Invalid email'
+    });
+  }
+
+  if(md5(password) !== user.password) {
+    return res.json({
+      code: 400,
+      message: 'Invalid password'
+    });
+  }
+
+  const token = user.token;
+  res.cookie("token", token);
+
+  res.json({
+    code: 200,
+    message: 'Login successfully',
+    token: token
+  })
+}
