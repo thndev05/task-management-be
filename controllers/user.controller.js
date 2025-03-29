@@ -226,3 +226,26 @@ module.exports.resetPassword = async (req, res) => {
     token: token
   })
 }
+
+// [GET] api/users/detail
+module.exports.detail = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    const user = await User.findOne({ 
+      token: token,
+      deleted: false 
+    }).select('-password -token');
+
+    res.json({
+      code: 200,
+      message: 'Detail user successfully',
+      info: user
+    });
+
+  } catch (err) { 
+    res.json({
+      code: 400,
+      message: err
+    });
+  }
+}
