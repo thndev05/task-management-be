@@ -24,6 +24,7 @@ module.exports.register = async (req, res) => {
       fullName: req.body.fullName,
       email: req.body.email,
       password: req.body.password,
+      token: generateHelper.generateRandomString(30)
     });
     await user.save();
 
@@ -236,11 +237,20 @@ module.exports.detail = async (req, res) => {
       deleted: false 
     }).select('-password -token');
 
-    res.json({
-      code: 200,
-      message: 'Detail user successfully',
-      info: user
-    });
+
+    if(user) {
+      res.json({
+        code: 200,
+        message: 'Detail user successfully',
+        info: user
+      });
+    } else {
+      res.json({
+        code: 400,
+        message: 'User not found'
+      });
+    }
+    
 
   } catch (err) { 
     res.json({
