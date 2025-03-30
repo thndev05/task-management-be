@@ -244,3 +244,24 @@ module.exports.detail = async (req, res) => {
     });
   }
 }
+
+// [GET] api/users/list
+module.exports.list = async (req, res) => {
+  try {
+    const users = await User.find({ 
+      deleted: false
+    }).select('fullName email');
+
+    res.json({
+      code: 200,
+      message: 'Get list successfully',
+      users: users
+    });
+    
+  } catch (err) { 
+    res.json({
+      code: 400,
+      message: err
+    });
+  }
+}
