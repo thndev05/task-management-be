@@ -1,4 +1,5 @@
 const md5 = require('md5');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
 const ForgotPassword = require('../models/forgot-password.model');
 const generateHelper = require('../helpers/generate');
@@ -24,17 +25,17 @@ module.exports.register = async (req, res) => {
       fullName: req.body.fullName,
       email: req.body.email,
       password: req.body.password,
-      token: generateHelper.generateRandomString(30)
+      // token: generateHelper.generateRandomString(30)
     });
     await user.save();
 
-    const token = user.token;
-    res.cookie("token", token);
+    // const token = user.token;
+    // res.cookie("token", token);
 
     res.json({
       code: 200,
       message: 'Register successfully',
-      token: token
+      // token: token
     })
   }
 }
@@ -63,7 +64,12 @@ module.exports.login = async (req, res) => {
     });
   }
 
-  const token = user.token;
+  const token = jwt.sign(
+    { userId: user._id },
+    process.env.JWT_SECRET_KEY, 
+    { expiresIn: "7d" }
+  );
+
   res.cookie("token", token);
 
   res.json({
@@ -189,43 +195,47 @@ module.exports.otpPassword = async (req, res) => {
     deleted: false
   });
 
-  const token = user.token;
-  res.cookie("token", token);
-
   res.json({
     code: 200,
     message: 'Verify successfully',
-    token: token
+    email: email
   })
 }
 
-// [POST] api/users/password/forgotPassword
+// [POST] api/users/password/resetPassword
 module.exports.resetPassword = async (req, res) => {
-  const token = req.cookies.token;
-  const password = req.body.password;
+  try {
+    const email = req.body.email;
+    const password = req.body.password;
 
-  const user = await User.findOne({
-    token: token
-  });
-
-  if(md5(password) === user.password) {
-    return res.json({
-      code: 400,
-      message: 'Password cannot be the same as current password'
+    const user = await User.findOne({
+      email: email,
+      deleted: false
     });
-  }
-   
-  await User.updateOne({
-    token: token
-  }, {
-    password: md5(password)
-  });
 
-  res.json({
-    code: 200,
-    message: 'Reset password successfully',
-    token: token
-  })
+    if(md5(password) === user.password) {
+      return res.json({
+        code: 400,
+        message: 'Password cannot be the same as current password'
+      });
+    }
+    
+    await User.updateOne({
+      email: email
+    }, {
+      password: md5(password)
+    });
+
+    res.json({
+      code: 200,
+      message: 'Reset password successfully',
+    })
+  } catch (error) {
+    res.json({
+      code: 400,
+      message: 'Reset password have error'
+    })
+  }
 }
 
 // [GET] api/users/detail
